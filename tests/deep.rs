@@ -72,3 +72,17 @@ fn enumeration_of_a_deep_word_preserves_the_complete_key() {
         },
     );
 }
+
+#[test]
+fn malformed_snapshot_cleanup_after_a_deep_key_is_stack_safe() {
+    isolated(
+        "malformed_snapshot_cleanup_after_a_deep_key_is_stack_safe",
+        || {
+            let data = format!("TRIE\t1\tS\n{}\nbad\\q\n", "a".repeat(100_000));
+            assert_eq!(
+                Trie::from_reader(data.as_bytes()).unwrap_err().kind(),
+                std::io::ErrorKind::InvalidData
+            );
+        },
+    );
+}
