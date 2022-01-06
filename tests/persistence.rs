@@ -26,3 +26,26 @@ fn reader_restores_words_and_case_configuration() {
     assert!(empty.is_empty());
     assert!(!empty.is_case_insensitive());
 }
+
+#[test]
+fn persistence_round_trips_every_special_scalar_and_empty_word() {
+    let trie: Trie = [
+        "",
+        "a\nb",
+        "a\rb",
+        "a\tb",
+        "nul\0byte",
+        "slash\\\\",
+        "É🦀",
+        " ",
+    ]
+    .into_iter()
+    .collect();
+    let mut bytes = Vec::new();
+    trie.to_writer(&mut bytes).unwrap();
+    let restored = Trie::from_reader(bytes.as_slice()).unwrap();
+    assert_eq!(restored.words(), trie.words());
+    let mut second = Vec::new();
+    restored.to_writer(&mut second).unwrap();
+    assert_eq!(bytes, second);
+}
