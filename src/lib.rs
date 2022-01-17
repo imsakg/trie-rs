@@ -1,7 +1,24 @@
+//! A deterministic UTF-8 string-set trie with prefix queries and persistence.
+//!
+//! ```
+//! use trie::Trie;
+//! let mut dictionary: Trie = ["car", "cart", "cat"].into_iter().collect();
+//! assert_eq!(dictionary.autocomplete_with_limit("ca", 2), ["car", "cart"]);
+//! assert!(dictionary.remove("car"));
+//! assert!(dictionary.contains("cart"));
+//! assert_eq!(dictionary.wildcard("c?t"), ["cat"]);
+//! ```
+//!
+//! Words are arbitrary UTF-8 strings, including the empty word. Edges represent
+//! Unicode scalar values, not grapheme clusters. Case-insensitive tries store
+//! Unicode lowercase keys rather than full case-folded keys or original spelling.
+#![warn(missing_docs)]
+
 mod pattern;
 mod persistence;
 
 use std::{borrow::Cow, collections::BTreeMap};
+/// A set of strings indexed by character prefixes. Queries return lexical order.
 #[derive(Clone, Debug)]
 pub struct Trie {
     root: TrieNode,
@@ -9,6 +26,7 @@ pub struct Trie {
     case_insensitive: bool,
 }
 
+/// A character-tree node. Edges are private; use [`Trie`] to manage dictionary keys.
 #[derive(Debug)]
 pub struct TrieNode {
     children: BTreeMap<char, TrieNode>,
@@ -42,6 +60,7 @@ impl Drop for TrieNode {
 }
 
 impl TrieNode {
+    /// Construct an empty, non-terminal node (retained for source compatibility).
     pub fn new() -> Self {
         Self {
             children: BTreeMap::new(),
@@ -79,6 +98,7 @@ impl<S: AsRef<str>> FromIterator<S> for Trie {
 }
 
 impl Trie {
+    /// Construct an empty, case-sensitive dictionary.
     pub fn new() -> Self {
         Self {
             root: TrieNode::new(),
@@ -86,6 +106,7 @@ impl Trie {
             case_insensitive: false,
         }
     }
+    /// Insert a word, returning true only when it was not already present.
     pub fn insert(&mut self, word: impl AsRef<str>) -> bool {
         let word = self.normalize(word.as_ref());
         let mut current_node = &mut self.root;
@@ -98,6 +119,7 @@ impl Trie {
         added
     }
 
+    /// Test complete-word membership; intermediate prefix paths are not words.
     pub fn contains(&self, word: impl AsRef<str>) -> bool {
         self.node(&self.normalize(word.as_ref()))
             .is_some_and(|node| node.is_word)
