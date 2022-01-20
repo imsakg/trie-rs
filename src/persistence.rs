@@ -1,8 +1,30 @@
 //! Versioned UTF-8 persistence; one escaped word per line.
 use crate::Trie;
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
 
 impl Trie {
+    /// Read a v1 snapshot; invalid UTF-8, headers, escapes, and unterminated lines fail.
+    pub fn from_reader<R: BufRead>(mut reader: R) -> io::Result<Self> {
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
+        let mut trie = match line.as_str() {
+            "TRIE\t1\tS\n" => Self::new(),
+            "TRIE\t1\tI\n" => Self::case_insensitive(),
+            _ => return Err(invalid("unsupported or missing dictionary header")),
+        };
+        loop {
+            line.clear();
+            if reader.read_line(&mut line)? == 0 {
+                break;
+            }
+            let Some(word) = line.strip_suffix('\n') else {
+                return Err(invalid("unterminated word record"));
+            };
+            trie.insert(decode(word)?);
+        }
+        Ok(trie)
+    }
+
     /// Write a deterministic v1 dictionary and flush the writer.
     pub fn to_writer<W: Write>(&self, mut writer: W) -> io::Result<()> {
         writeln!(
@@ -30,4 +52,28 @@ fn encode(word: &str) -> String {
         }
     }
     output
+}
+
+fn invalid(message: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidData, message)
+}
+
+fn decode(word: &str) -> io::Result<String> {
+    let mut output = String::new();
+    let mut chars = word.chars();
+    while let Some(ch) = chars.next() {
+        if ch != '\\' {
+            output.push(ch);
+            continue;
+        }
+        output.push(match chars.next() {
+            Some('\\') => '\\',
+            Some('n') => '\n',
+            Some('r') => '\r',
+            Some('t') => '\t',
+            Some('0') => '\0',
+            _ => return Err(invalid("invalid word escape")),
+        });
+    }
+    Ok(output)
 }
