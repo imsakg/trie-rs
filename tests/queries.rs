@@ -65,7 +65,7 @@ fn question_mark_matches_exactly_one_unicode_scalar() {
     assert_eq!(trie.wildcard("c?t"), ["cat", "cot", "c🦀t"]);
     assert_eq!(trie.wildcard(""), [""]);
     assert_eq!(trie.wildcard("cat"), ["cat"]);
-    assert!(trie.wildcard("??").is_empty() == false);
+    assert_eq!(trie.wildcard("??"), ["ct"]);
 }
 
 #[test]
@@ -94,4 +94,16 @@ fn wildcard_limits_select_the_first_sorted_matches() {
     assert_eq!(trie.wildcard_with_limit("*", 2), ["a", "ab"]);
     assert!(trie.wildcard_with_limit("*", 0).is_empty());
     assert_eq!(trie.wildcard_with_limit("a*", 99), ["a", "ab", "abc"]);
+}
+
+#[test]
+fn wildcard_matching_is_anchored_and_empty_patterns_are_not_match_all() {
+    let trie: Trie = ["", "cat", "scatter", "🦀", "é"].into_iter().collect();
+    assert_eq!(trie.wildcard("cat"), ["cat"]);
+    assert_eq!(trie.wildcard("*cat*"), ["cat", "scatter"]);
+    assert_eq!(trie.wildcard("?"), ["é", "🦀"]);
+    assert_eq!(trie.wildcard(""), [""]);
+    let mut folded = Trie::case_insensitive();
+    folded.insert("Éclair");
+    assert_eq!(folded.wildcard("É*"), ["éclair"]);
 }
