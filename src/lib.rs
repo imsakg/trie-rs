@@ -163,6 +163,20 @@ impl Trie {
         words
     }
 
+    /// Count complete words in a prefix subtree without allocating result strings.
+    pub fn count_prefix(&self, prefix: impl AsRef<str>) -> usize {
+        let Some(root) = self.node(prefix.as_ref()) else {
+            return 0;
+        };
+        let mut stack = vec![root];
+        let mut count = 0;
+        while let Some(node) = stack.pop() {
+            count += usize::from(node.is_word);
+            stack.extend(node.children.values());
+        }
+        count
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {

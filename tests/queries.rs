@@ -28,3 +28,12 @@ fn completion_limits_are_sorted_and_zero_is_empty() {
         ["a", "ab", "ac"]
     );
 }
+
+#[test]
+fn count_prefix_includes_terminal_prefix_and_empty_word() {
+    let trie: Trie = ["", "a", "ab", "abc", "b"].into_iter().collect();
+    assert_eq!(trie.count_prefix(""), 5);
+    assert_eq!(trie.count_prefix("a"), 3);
+    assert_eq!(trie.count_prefix("ab"), 2);
+    assert_eq!(trie.count_prefix("z"), 0);
+}
