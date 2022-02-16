@@ -48,3 +48,11 @@ fn longest_prefix_returns_a_word_not_just_a_path() {
     trie.insert("");
     assert_eq!(trie.longest_prefix("z").as_deref(), Some(""));
 }
+
+#[test]
+fn tree_rendering_is_plain_deterministic_and_non_consuming() {
+    let trie: Trie = ["b", "a", "ab", ""].into_iter().collect();
+    assert_eq!(trie.tree(), "(*)\na (*)\n b (*)\nb (*)\n");
+    assert_eq!(trie.len(), 4);
+    assert_eq!(trie.tree(), trie.tree());
+}

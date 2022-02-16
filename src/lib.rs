@@ -1,7 +1,3 @@
-extern crate termion;
-
-use termion::color;
-
 use std::collections::BTreeMap;
 #[derive(Clone, Debug)]
 pub struct Trie {
@@ -196,35 +192,38 @@ impl Trie {
         end.map(|end| input[..end].to_owned())
     }
 
-    pub fn print(self) {
-        pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
-            if depth > 0 {
-                let white_space = " ".repeat(depth);
-                println!(
-                    "{}{} {}",
-                    white_space,
-                    word,
-                    if is_word { "(*)" } else { "" }
-                );
-            }
+    /// Render edge labels with one-space indentation per depth. No ANSI escapes.
+    pub fn tree(&self) -> String {
+        let mut output = String::new();
+        if self.root.is_word {
+            output.push_str("(*)\n");
         }
-
-        pub fn print_children(node: &TrieNode, depth: usize) {
-            for (key, value) in node.children.iter() {
-                print_single_node(&key.to_string(), depth, value.is_word);
-                print_children(value, depth + 1);
+        let mut stack: Vec<_> = self
+            .root
+            .children
+            .iter()
+            .rev()
+            .map(|(ch, child)| (*ch, child, 0))
+            .collect();
+        while let Some((ch, node, depth)) = stack.pop() {
+            output.push_str(&" ".repeat(depth));
+            output.push(ch);
+            if node.is_word {
+                output.push_str(" (*)");
             }
-        }
-
-        for (key, value) in self.root.children.iter() {
-            println!(
-                "{} {}{}",
-                color::Fg(color::Red),
-                key,
-                color::Fg(color::Reset)
+            output.push('\n');
+            stack.extend(
+                node.children
+                    .iter()
+                    .rev()
+                    .map(|(ch, child)| (*ch, child, depth + 1)),
             );
-            print_single_node(&key.to_string(), 0, value.is_word);
-            print_children(value, 1);
         }
+        output
+    }
+
+    /// Print a plain-text tree without consuming the dictionary.
+    pub fn print(&self) {
+        print!("{}", self.tree());
     }
 }
