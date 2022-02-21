@@ -29,3 +29,14 @@
 ## Deferred
 
 Fuzzy edit distance, ranked usage statistics, compressed radix edges, locale-specific collation, and concurrent mutation are outside this change.
+
+
+## Completion disposition
+
+All seven implementation stages are complete. Insertion/deletion, exact/prefix
+search, bounded autocomplete, wildcard queries, opt-in lowercase mode, strict
+persistence, CLI operations, documentation, and regression models are implemented.
+The final local debug/release, lint, documentation, example, and CLI gates passed;
+see [acceptance evidence](validation.md). Deferred features remain deferred rather
+than appearing as placeholder APIs. The original ancestry and input are preserved;
+no remote publication is part of this change.
