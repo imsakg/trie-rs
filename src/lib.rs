@@ -219,6 +219,23 @@ impl Trie {
         }
     }
 
+    /// Match whole words; `?` consumes one Unicode scalar value.
+    pub fn wildcard(&self, pattern: impl AsRef<str>) -> Vec<String> {
+        let pattern = self.normalize(pattern.as_ref());
+        let pattern: Vec<_> = pattern.chars().collect();
+        self.words()
+            .into_iter()
+            .filter(|word| {
+                let chars: Vec<_> = word.chars().collect();
+                chars.len() == pattern.len()
+                    && chars
+                        .iter()
+                        .zip(&pattern)
+                        .all(|(ch, token)| *token == '?' || ch == token)
+            })
+            .collect()
+    }
+
     /// Render edge labels with one-space indentation per depth. No ANSI escapes.
     pub fn tree(&self) -> String {
         let mut output = String::new();

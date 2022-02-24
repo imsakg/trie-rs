@@ -56,3 +56,14 @@ fn tree_rendering_is_plain_deterministic_and_non_consuming() {
     assert_eq!(trie.len(), 4);
     assert_eq!(trie.tree(), trie.tree());
 }
+
+#[test]
+fn question_mark_matches_exactly_one_unicode_scalar() {
+    let trie: Trie = ["cat", "cot", "ct", "c🦀t", "cats", ""]
+        .into_iter()
+        .collect();
+    assert_eq!(trie.wildcard("c?t"), ["cat", "cot", "c🦀t"]);
+    assert_eq!(trie.wildcard(""), [""]);
+    assert_eq!(trie.wildcard("cat"), ["cat"]);
+    assert!(trie.wildcard("??").is_empty() == false);
+}
