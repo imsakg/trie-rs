@@ -51,3 +51,54 @@ fn mixed_mutations_agree_with_an_independent_ordered_set() {
         }
     }
 }
+
+#[test]
+fn prefix_and_longest_queries_agree_with_ordered_set_filters() {
+    for insensitive in [false, true] {
+        let mut trie = if insensitive {
+            Trie::case_insensitive()
+        } else {
+            Trie::new()
+        };
+        let mut expected = BTreeSet::new();
+        let mut state = 41;
+        for _ in 0..300 {
+            let value = word(&mut state);
+            trie.insert(&value);
+            expected.insert(if insensitive {
+                value.to_lowercase()
+            } else {
+                value
+            });
+        }
+        for _ in 0..300 {
+            let raw = word(&mut state);
+            let prefix = if insensitive {
+                raw.to_lowercase()
+            } else {
+                raw.clone()
+            };
+            let completions: Vec<_> = expected
+                .iter()
+                .filter(|word| word.starts_with(&prefix))
+                .cloned()
+                .collect();
+            assert_eq!(
+                trie.has_prefix(&raw),
+                prefix.is_empty() || !completions.is_empty()
+            );
+            assert_eq!(trie.count_prefix(&raw), completions.len());
+            assert_eq!(trie.autocomplete(&raw), completions);
+            assert_eq!(
+                trie.autocomplete_with_limit(&raw, 2),
+                completions.iter().take(2).cloned().collect::<Vec<_>>()
+            );
+            let longest = expected
+                .iter()
+                .filter(|word| prefix.starts_with(word.as_str()))
+                .max_by_key(|word| word.len())
+                .cloned();
+            assert_eq!(trie.longest_prefix(&raw), longest);
+        }
+    }
+}
