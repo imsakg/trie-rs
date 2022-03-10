@@ -39,17 +39,17 @@ impl Trie {
             root: TrieNode::new(),
         }
     }
-    pub fn insert(&mut self, word: String) {
+    pub fn insert(&mut self, word: impl AsRef<str>) {
         let mut current_node = &mut self.root;
-        for c in word.chars() {
+        for c in word.as_ref().chars() {
             current_node = current_node.children.entry(c).or_insert(TrieNode::new());
         }
         current_node.is_word = true;
     }
 
-    pub fn contains(&self, word: String) -> bool {
+    pub fn contains(&self, word: impl AsRef<str>) -> bool {
         let mut current_node = &self.root;
-        for c in word.chars() {
+        for c in word.as_ref().chars() {
             if let Some(node) = current_node.children.get(&c) {
                 current_node = node;
             } else {
