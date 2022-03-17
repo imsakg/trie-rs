@@ -67,3 +67,14 @@ fn question_mark_matches_exactly_one_unicode_scalar() {
     assert_eq!(trie.wildcard("cat"), ["cat"]);
     assert!(trie.wildcard("??").is_empty() == false);
 }
+
+#[test]
+fn star_matches_zero_or_more_scalars_without_duplicate_results() {
+    let trie: Trie = ["", "a", "ab", "abb", "acb", "ba", "🦀"]
+        .into_iter()
+        .collect();
+    assert_eq!(trie.wildcard("a*b"), ["ab", "abb", "acb"]);
+    assert_eq!(trie.wildcard("**"), trie.words());
+    assert_eq!(trie.wildcard("a*"), ["a", "ab", "abb", "acb"]);
+    assert_eq!(trie.wildcard("*?"), ["a", "ab", "abb", "acb", "ba", "🦀"]);
+}
