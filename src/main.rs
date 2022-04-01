@@ -1,47 +1,29 @@
-use std::{fs::File, io::BufRead};
-use trie::Trie;
+use std::{
+    io::{self, Write},
+    process::ExitCode,
+};
 
-const TEST: [&str; 10] = [
-    "hello",
-    "world",
-    "foo",
-    "bar",
-    "baz",
-    "fooloma",
-    "respectable",
-    "lorem",
-    "ipsum",
-    "dolor",
-];
+const HELP: &str = "Usage: trie [OPTIONS] COMMAND [ARGS]\n\nA UTF-8 dictionary trie.\n\nOptions:\n  -h, --help  Show help\n";
 
-fn main() {
-    let mut trie = Trie::new();
+fn invalid(message: impl Into<String>) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidInput, message.into())
+}
 
-    let file = File::open("lorem.txt").unwrap();
-    let reader = std::io::BufReader::new(file);
+fn run() -> io::Result<u8> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.is_empty() || args == ["--help"] || args == ["-h"] {
+        io::stdout().lock().write_all(HELP.as_bytes())?;
+        return Ok(0);
+    }
+    Err(invalid(format!("unknown command: {}", args[0])))
+}
 
-    for line in reader.lines() {
-        for word in line.unwrap().split_whitespace() {
-            if word
-                .chars()
-                .any(|c| c.is_ascii_punctuation() || c.is_ascii_digit() || c.is_uppercase())
-            {
-                continue;
-            }
-            trie.insert(word.to_string());
-        }
-        if trie.contains("respectable".to_string()) {
-            break;
+fn main() -> ExitCode {
+    match run() {
+        Ok(code) => ExitCode::from(code),
+        Err(error) => {
+            eprintln!("trie: {error}");
+            ExitCode::from(2)
         }
     }
-
-    // for word in TEST.iter() {
-    //     trie.insert(word.to_string());
-    // }
-
-    for word in TEST.iter() {
-        println!("{}: {}", word, trie.contains(word.to_string()));
-    }
-
-    trie.print();
 }
