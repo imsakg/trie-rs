@@ -126,6 +126,24 @@ impl Trie {
         self.len = 0;
     }
 
+    /// Return all stored words in Unicode scalar lexicographic order.
+    pub fn words(&self) -> Vec<String> {
+        let mut words = Vec::with_capacity(self.len);
+        let mut stack = vec![(&self.root, String::new())];
+        while let Some((node, word)) = stack.pop() {
+            if node.is_word {
+                words.push(word.clone());
+            }
+            for (ch, child) in &node.children {
+                let mut next = word.clone();
+                next.push(*ch);
+                stack.push((child, next));
+            }
+        }
+        words.sort();
+        words
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {
