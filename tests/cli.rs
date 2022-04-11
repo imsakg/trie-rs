@@ -296,3 +296,46 @@ fn invalid_limits_and_argument_counts_never_save_a_dictionary() {
         assert!(!std::path::Path::new(path).exists());
     }
 }
+
+#[test]
+fn missing_options_unknown_flags_and_unreadable_files_have_visible_errors() {
+    for args in [
+        vec!["--words"],
+        vec!["--load"],
+        vec!["--save"],
+        vec!["--limit"],
+        vec!["--mystery"],
+        vec!["--"],
+    ] {
+        let output = cli(&args);
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(output.stdout.is_empty());
+        assert!(String::from_utf8_lossy(&output.stderr).starts_with("trie:"));
+    }
+    let temp = common::temp_dir();
+    let missing = temp.path().join("missing");
+    let corrupt = temp.path().join("corrupt");
+    std::fs::write(&corrupt, "not a snapshot").unwrap();
+    for option in ["--words", "--load"] {
+        let output = cli(&[option, missing.to_str().unwrap(), "list"]);
+        assert_eq!(output.status.code(), Some(2));
+        assert!(!output.stderr.is_empty());
+    }
+    assert_eq!(
+        cli(&["--load", corrupt.to_str().unwrap(), "list"])
+            .status
+            .code(),
+        Some(2)
+    );
+}
+
+#[test]
+fn empty_result_lists_are_successful_but_failed_boolean_queries_exit_one() {
+    assert_eq!(cli(&["search", "missing"]).status.code(), Some(1));
+    assert_eq!(cli(&["prefix", "missing"]).status.code(), Some(1));
+    for args in [["complete", "missing"], ["match", "*"]] {
+        let output = cli(&args);
+        assert_eq!(output.status.code(), Some(0));
+        assert!(output.stdout.is_empty());
+    }
+}
