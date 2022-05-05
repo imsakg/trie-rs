@@ -86,3 +86,17 @@ fn malformed_snapshot_cleanup_after_a_deep_key_is_stack_safe() {
         },
     );
 }
+
+#[test]
+fn debug_output_is_bounded_even_for_an_extremely_deep_dictionary() {
+    isolated(
+        "debug_output_is_bounded_even_for_an_extremely_deep_dictionary",
+        || {
+            let mut trie = Trie::new();
+            trie.insert("a".repeat(100_000));
+            let output = format!("{trie:?}");
+            assert!(output.len() < 256);
+            assert!(output.contains("len: 1"));
+        },
+    );
+}

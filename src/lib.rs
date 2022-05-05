@@ -20,7 +20,7 @@ mod persistence;
 
 use std::{borrow::Cow, collections::BTreeMap};
 /// A set of strings indexed by character prefixes. Queries return lexical order.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Trie {
     root: TrieNode,
     len: usize,
@@ -32,6 +32,16 @@ pub struct Trie {
 pub struct TrieNode {
     children: BTreeMap<char, TrieNode>,
     is_word: bool,
+}
+
+impl std::fmt::Debug for Trie {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Trie")
+            .field("len", &self.len)
+            .field("case_insensitive", &self.case_insensitive)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Clone for TrieNode {
