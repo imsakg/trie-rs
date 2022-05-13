@@ -5,6 +5,7 @@ use termion::color;
 use std::collections::HashMap;
 pub struct Trie {
     root: TrieNode,
+    len: usize,
 }
 
 pub struct TrieNode {
@@ -37,14 +38,18 @@ impl Trie {
     pub fn new() -> Self {
         Self {
             root: TrieNode::new(),
+            len: 0,
         }
     }
-    pub fn insert(&mut self, word: impl AsRef<str>) {
+    pub fn insert(&mut self, word: impl AsRef<str>) -> bool {
         let mut current_node = &mut self.root;
         for c in word.as_ref().chars() {
             current_node = current_node.children.entry(c).or_insert(TrieNode::new());
         }
+        let added = !current_node.is_word;
         current_node.is_word = true;
+        self.len += usize::from(added);
+        added
     }
 
     pub fn contains(&self, word: impl AsRef<str>) -> bool {
@@ -57,6 +62,16 @@ impl Trie {
             }
         }
         current_node.is_word
+    }
+
+    /// Number of distinct stored words, including the empty word.
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Whether no complete words are stored.
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     pub fn print(self) {

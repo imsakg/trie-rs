@@ -25,3 +25,14 @@ fn borrowed_strings_are_accepted_without_allocating_at_call_sites() {
     assert!(trie.contains("borrowed"));
     assert!(trie.contains(&owned));
 }
+
+#[test]
+fn length_counts_unique_words_and_insert_reports_changes() {
+    let mut trie = Trie::new();
+    assert!(trie.is_empty());
+    assert!(trie.insert("one"));
+    assert!(!trie.insert("one"));
+    assert!(trie.insert(""));
+    assert_eq!(trie.len(), 2);
+    assert!(!trie.is_empty());
+}
