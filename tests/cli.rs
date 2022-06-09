@@ -90,3 +90,24 @@ fn match_command_supports_globs_without_shell_expansion() {
         "cart\n"
     );
 }
+
+#[test]
+fn ignore_case_normalizes_loaded_word_lists_and_queries() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "Rust\nRUST\nRuby\n").unwrap();
+    let path = path.to_str().unwrap();
+    let output = cli(&["--ignore-case", "--words", path, "complete", "RU"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "ruby\nrust\n");
+    assert_eq!(
+        cli(&["-i", "--words", path, "search", "rUsT"])
+            .status
+            .code(),
+        Some(0)
+    );
+    assert_eq!(
+        cli(&["--words", path, "search", "rust"]).status.code(),
+        Some(1)
+    );
+}

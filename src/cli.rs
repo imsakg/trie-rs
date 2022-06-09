@@ -11,16 +11,22 @@ fn invalid(message: impl Into<String>) -> io::Error {
 struct Options {
     words: Vec<String>,
     limit: Option<usize>,
+    ignore_case: bool,
 }
 
 fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
     let mut options = Options {
         words: Vec::new(),
         limit: None,
+        ignore_case: false,
     };
     let mut args = args.into_iter().peekable();
     loop {
         match args.peek().map(String::as_str) {
+            Some("--ignore-case" | "-i") => {
+                args.next();
+                options.ignore_case = true;
+            }
             Some("--limit") => {
                 args.next();
                 let value = args
@@ -58,7 +64,11 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
 
 pub fn run(args: Vec<String>, output: &mut impl Write) -> io::Result<u8> {
     let (options, args) = parse(args)?;
-    let mut trie = Trie::new();
+    let mut trie = if options.ignore_case {
+        Trie::case_insensitive()
+    } else {
+        Trie::new()
+    };
     for path in options.words {
         trie.import_words(BufReader::new(File::open(path)?))?;
     }
