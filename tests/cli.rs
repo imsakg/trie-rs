@@ -42,3 +42,21 @@ fn search_prints_membership_and_sets_a_no_match_exit_status() {
     assert_eq!(absent.status.code(), Some(1));
     assert_eq!(stdout(&absent), "false\n");
 }
+
+#[test]
+fn prefix_and_count_commands_query_paths_without_requiring_a_word() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "car\ncart\ncat\n").unwrap();
+    let path = path.to_str().unwrap();
+    let prefix = cli(&["--words", path, "prefix", "ca"]);
+    assert_eq!(prefix.status.code(), Some(0));
+    assert_eq!(stdout(&prefix), "true\n");
+    let count = cli(&["--words", path, "count", "ca"]);
+    assert!(count.status.success());
+    assert_eq!(stdout(&count), "3\n");
+    assert_eq!(
+        cli(&["--words", path, "prefix", "z"]).status.code(),
+        Some(1)
+    );
+}

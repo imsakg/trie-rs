@@ -76,6 +76,17 @@ fn execute(
             writeln!(output, "{found}")?;
             Ok(u8::from(!found))
         }
+        "prefix" => {
+            arity(args, 1, command)?;
+            let found = trie.has_prefix(&args[0]);
+            writeln!(output, "{found}")?;
+            Ok(u8::from(!found))
+        }
+        "count" => {
+            arity(args, 1, command)?;
+            writeln!(output, "{}", trie.count_prefix(&args[0]))?;
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
