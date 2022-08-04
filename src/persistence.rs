@@ -119,6 +119,9 @@ fn decode(word: &str) -> io::Result<String> {
     let mut output = String::new();
     let mut chars = word.chars();
     while let Some(ch) = chars.next() {
+        if matches!(ch, '\r' | '\t' | '\0') {
+            return Err(invalid("unescaped record control character"));
+        }
         if ch != '\\' {
             output.push(ch);
             continue;

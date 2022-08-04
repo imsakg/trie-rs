@@ -178,3 +178,14 @@ fn save_accepts_a_destination_that_looks_like_a_temporary_filename() {
     assert_eq!(Trie::load(&path).unwrap().words(), ["must survive"]);
     assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
 }
+
+#[test]
+fn raw_record_controls_are_rejected_instead_of_becoming_hidden_key_suffixes() {
+    for record in ["word\r\n", "word\tkey\n", "word\0key\n"] {
+        let data = format!("TRIE\t1\tS\n{record}");
+        assert_eq!(
+            Trie::from_reader(data.as_bytes()).unwrap_err().kind(),
+            std::io::ErrorKind::InvalidData
+        );
+    }
+}
