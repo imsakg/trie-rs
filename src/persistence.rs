@@ -7,6 +7,21 @@ use std::{
 };
 
 impl Trie {
+    /// Export sorted LF-terminated words. Reject CR/LF-containing words before writing.
+    pub fn export_words<W: Write>(&self, mut writer: W) -> io::Result<()> {
+        let words = self.words();
+        if words.iter().any(|word| word.contains(['\r', '\n'])) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "word list cannot represent CR or LF inside a word",
+            ));
+        }
+        for word in words {
+            writeln!(writer, "{word}")?;
+        }
+        writer.flush()
+    }
+
     /// Import one UTF-8 word per line, preserving spaces and counting new keys.
     /// LF/CRLF are accepted. On an I/O error, previously read words remain inserted.
     pub fn import_words<R: BufRead>(&mut self, reader: R) -> io::Result<usize> {

@@ -149,3 +149,20 @@ fn import_words_counts_new_entries_and_accepts_crlf_word_lists() {
     assert_eq!(trie.words(), ["", "apple", "pear", "with space"]);
     assert_eq!(trie.import_words(&b"APPLE\n"[..]).unwrap(), 0);
 }
+
+#[test]
+fn export_words_is_sorted_and_rejects_unrepresentable_line_breaks() {
+    let trie: Trie = ["pear", "", "apple"].into_iter().collect();
+    let mut bytes = Vec::new();
+    trie.export_words(&mut bytes).unwrap();
+    assert_eq!(bytes, b"\napple\npear\n");
+    for word in ["line\nbreak", "carriage\rreturn"] {
+        let trie: Trie = ["a", word].into_iter().collect();
+        let mut bytes = Vec::new();
+        assert_eq!(
+            trie.export_words(&mut bytes).unwrap_err().kind(),
+            std::io::ErrorKind::InvalidInput
+        );
+        assert!(bytes.is_empty());
+    }
+}
