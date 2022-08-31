@@ -94,7 +94,7 @@ impl Trie {
 
     /// Whether an edge path exists. The empty prefix always exists.
     pub fn has_prefix(&self, prefix: impl AsRef<str>) -> bool {
-        self.node(prefix.as_ref()).is_some()
+        self.node(&self.normalize(prefix.as_ref())).is_some()
     }
 
     /// Remove a complete word and prune edges no longer used by another word.
@@ -117,7 +117,8 @@ impl Trie {
                 }
             }
         }
-        let removed = remove_at(&mut self.root, &mut word.as_ref().chars());
+        let word = self.normalize(word.as_ref());
+        let removed = remove_at(&mut self.root, &mut word.chars());
         self.len -= usize::from(removed);
         removed
     }
@@ -143,12 +144,12 @@ impl Trie {
         if limit == 0 {
             return Vec::new();
         }
-        let prefix = prefix.as_ref();
-        let Some(root) = self.node(prefix) else {
+        let prefix = self.normalize(prefix.as_ref());
+        let Some(root) = self.node(&prefix) else {
             return Vec::new();
         };
         let mut words = Vec::new();
-        let mut stack = vec![(root, prefix.to_owned())];
+        let mut stack = vec![(root, prefix.into_owned())];
         while let Some((node, word)) = stack.pop() {
             if node.is_word {
                 words.push(word.clone());
@@ -167,7 +168,8 @@ impl Trie {
 
     /// Count complete words in a prefix subtree without allocating result strings.
     pub fn count_prefix(&self, prefix: impl AsRef<str>) -> usize {
-        let Some(root) = self.node(prefix.as_ref()) else {
+        let prefix = self.normalize(prefix.as_ref());
+        let Some(root) = self.node(&prefix) else {
             return 0;
         };
         let mut stack = vec![root];
@@ -181,7 +183,7 @@ impl Trie {
 
     /// Longest stored word that is a prefix of the input.
     pub fn longest_prefix(&self, input: impl AsRef<str>) -> Option<String> {
-        let input = input.as_ref();
+        let input = self.normalize(input.as_ref());
         let mut node = &self.root;
         let mut end = node.is_word.then_some(0);
         for (index, ch) in input.char_indices() {
