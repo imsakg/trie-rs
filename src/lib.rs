@@ -113,28 +113,30 @@ impl Trie {
 
     /// Remove a complete word and prune edges no longer used by another word.
     pub fn remove(&mut self, word: impl AsRef<str>) -> bool {
-        fn remove_at(node: &mut TrieNode, chars: &mut std::str::Chars<'_>) -> bool {
-            match chars.next() {
-                None => std::mem::replace(&mut node.is_word, false),
-                Some(ch) => {
-                    let (removed, prune) = match node.children.get_mut(&ch) {
-                        Some(child) => {
-                            let removed = remove_at(child, chars);
-                            (removed, !child.is_word && child.children.is_empty())
-                        }
-                        None => return false,
-                    };
-                    if prune {
-                        node.children.remove(&ch);
-                    }
-                    removed
-                }
-            }
-        }
         let word = self.normalize(word.as_ref());
-        let removed = remove_at(&mut self.root, &mut word.chars());
-        self.len -= usize::from(removed);
-        removed
+        if !self.node(&word).is_some_and(|node| node.is_word) {
+            return false;
+        }
+        let mut current = std::mem::take(&mut self.root);
+        let mut ancestors = Vec::new();
+        for ch in word.chars() {
+            let child = current
+                .children
+                .remove(&ch)
+                .expect("membership checked before detaching");
+            ancestors.push((current, ch));
+            current = child;
+        }
+        current.is_word = false;
+        while let Some((mut parent, ch)) = ancestors.pop() {
+            if current.is_word || !current.children.is_empty() {
+                parent.children.insert(ch, current);
+            }
+            current = parent;
+        }
+        self.root = current;
+        self.len -= 1;
+        true
     }
 
     /// Discard all words while retaining the trie's configuration.

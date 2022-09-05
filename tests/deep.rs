@@ -30,3 +30,20 @@ fn dropping_and_clearing_deep_paths_are_stack_safe() {
         assert!(trie.is_empty());
     });
 }
+
+#[test]
+fn removing_a_deep_word_is_stack_safe_and_prunes_the_path() {
+    isolated(
+        "removing_a_deep_word_is_stack_safe_and_prunes_the_path",
+        || {
+            let word = "a".repeat(100_000);
+            let mut trie = Trie::new();
+            trie.insert(&word);
+            trie.insert("b");
+            assert!(trie.remove(&word));
+            assert!(!trie.has_prefix("a"));
+            assert!(trie.contains("b"));
+            assert_eq!(trie.len(), 1);
+        },
+    );
+}
