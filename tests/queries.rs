@@ -87,3 +87,11 @@ fn escaped_wildcards_and_backslashes_match_literal_characters() {
     assert_eq!(trie.wildcard(r"a\\b"), [r"a\b"]);
     assert_eq!(trie.wildcard(r"a\"), [r"a\"]);
 }
+
+#[test]
+fn wildcard_limits_select_the_first_sorted_matches() {
+    let trie: Trie = ["a", "ab", "abc", "b"].into_iter().collect();
+    assert_eq!(trie.wildcard_with_limit("*", 2), ["a", "ab"]);
+    assert!(trie.wildcard_with_limit("*", 0).is_empty());
+    assert_eq!(trie.wildcard_with_limit("a*", 99), ["a", "ab", "abc"]);
+}

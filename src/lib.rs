@@ -224,11 +224,20 @@ impl Trie {
     /// Match whole words with `?`, `*`, and backslash escapes.
     /// A final backslash is a literal backslash.
     pub fn wildcard(&self, pattern: impl AsRef<str>) -> Vec<String> {
+        self.wildcard_with_limit(pattern, usize::MAX)
+    }
+
+    /// Return the first `limit` sorted whole-word wildcard matches.
+    pub fn wildcard_with_limit(&self, pattern: impl AsRef<str>, limit: usize) -> Vec<String> {
+        if limit == 0 {
+            return Vec::new();
+        }
         let pattern = self.normalize(pattern.as_ref());
         let pattern = pattern::Pattern::new(&pattern);
         self.words()
             .into_iter()
             .filter(|word| pattern.matches(word))
+            .take(limit)
             .collect()
     }
 
