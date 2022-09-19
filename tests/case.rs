@@ -40,3 +40,11 @@ fn lowercase_semantics_are_unicode_but_not_full_case_folding() {
     assert!(!trie.contains("ς"));
     assert_eq!(trie.longest_prefix("İstanbul").as_deref(), Some("i\u{307}"));
 }
+
+#[test]
+fn escaped_literals_do_not_change_context_sensitive_lowercase_matching() {
+    let mut trie = Trie::case_insensitive();
+    trie.insert("ΟΣ");
+    assert_eq!(trie.wildcard("ΟΣ"), ["ος"]);
+    assert_eq!(trie.wildcard(r"Ο\Σ"), ["ος"]);
+}

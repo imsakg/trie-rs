@@ -233,8 +233,7 @@ impl Trie {
         if limit == 0 {
             return Vec::new();
         }
-        let pattern = self.normalize(pattern.as_ref());
-        let pattern = pattern::Pattern::new(&pattern);
+        let pattern = pattern::Pattern::new(pattern.as_ref(), self.case_insensitive);
         self.words()
             .into_iter()
             .filter(|word| pattern.matches(word))

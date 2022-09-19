@@ -9,7 +9,7 @@ enum Token {
 pub(crate) struct Pattern(Vec<Token>);
 
 impl Pattern {
-    pub(crate) fn new(pattern: &str) -> Self {
+    pub(crate) fn new(pattern: &str, lowercase: bool) -> Self {
         let mut chars = pattern.chars();
         let mut tokens = Vec::new();
         while let Some(ch) = chars.next() {
@@ -20,7 +20,26 @@ impl Pattern {
                 other => Token::Literal(other),
             });
         }
-        Self(tokens)
+        if !lowercase {
+            return Self(tokens);
+        }
+        let mut normalized = Vec::new();
+        let mut literal = String::new();
+        fn flush(literal: &mut String, output: &mut Vec<Token>) {
+            output.extend(literal.to_lowercase().chars().map(Token::Literal));
+            literal.clear();
+        }
+        for token in tokens {
+            match token {
+                Token::Literal(ch) => literal.push(ch),
+                other => {
+                    flush(&mut literal, &mut normalized);
+                    normalized.push(other);
+                }
+            }
+        }
+        flush(&mut literal, &mut normalized);
+        Self(normalized)
     }
 
     pub(crate) fn matches(&self, word: &str) -> bool {
