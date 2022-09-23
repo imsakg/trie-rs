@@ -53,15 +53,15 @@ impl Trie {
     }
 
     pub fn contains(&self, word: impl AsRef<str>) -> bool {
-        let mut current_node = &self.root;
-        for c in word.as_ref().chars() {
-            if let Some(node) = current_node.children.get(&c) {
-                current_node = node;
-            } else {
-                return false;
-            }
+        self.node(word.as_ref()).is_some_and(|node| node.is_word)
+    }
+
+    fn node(&self, word: &str) -> Option<&TrieNode> {
+        let mut node = &self.root;
+        for ch in word.chars() {
+            node = node.children.get(&ch)?;
         }
-        current_node.is_word
+        Some(node)
     }
 
     /// Number of distinct stored words, including the empty word.
@@ -76,14 +76,7 @@ impl Trie {
 
     /// Whether an edge path exists. The empty prefix always exists.
     pub fn has_prefix(&self, prefix: impl AsRef<str>) -> bool {
-        let mut node = &self.root;
-        for ch in prefix.as_ref().chars() {
-            match node.children.get(&ch) {
-                Some(child) => node = child,
-                None => return false,
-            }
-        }
-        true
+        self.node(prefix.as_ref()).is_some()
     }
 
     pub fn print(self) {
