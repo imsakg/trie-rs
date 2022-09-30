@@ -365,3 +365,22 @@ fn repeated_word_sources_merge_and_unsaved_mutations_leave_the_snapshot_untouche
     assert_eq!(stdout(&output), "2\n");
     assert_eq!(std::fs::read(&snapshot).unwrap(), original);
 }
+
+#[test]
+fn bundled_word_fixture_is_usable_from_both_the_library_and_cli() {
+    let contents = include_str!("../data/words.txt");
+    let mut trie = trie::Trie::new();
+    trie.import_words(contents.as_bytes()).unwrap();
+    let expected: std::collections::BTreeSet<_> = contents.lines().collect();
+    assert_eq!(
+        trie.words(),
+        expected
+            .iter()
+            .map(|word| word.to_string())
+            .collect::<Vec<_>>()
+    );
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("data/words.txt");
+    let output = cli(&["--words", path.to_str().unwrap(), "complete", "app"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "apple\napplication\napply\n");
+}
