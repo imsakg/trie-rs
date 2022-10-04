@@ -1,3 +1,5 @@
+mod pattern;
+
 use std::{borrow::Cow, collections::BTreeMap};
 #[derive(Clone, Debug)]
 pub struct Trie {
@@ -219,30 +221,14 @@ impl Trie {
         }
     }
 
-    /// Match whole words: `?` consumes one scalar, `*` consumes zero or more.
+    /// Match whole words with `?`, `*`, and backslash escapes.
+    /// A final backslash is a literal backslash.
     pub fn wildcard(&self, pattern: impl AsRef<str>) -> Vec<String> {
         let pattern = self.normalize(pattern.as_ref());
-        let pattern: Vec<_> = pattern.chars().collect();
+        let pattern = pattern::Pattern::new(&pattern);
         self.words()
             .into_iter()
-            .filter(|word| {
-                let chars: Vec<_> = word.chars().collect();
-                let mut previous = vec![false; chars.len() + 1];
-                previous[0] = true;
-                for token in &pattern {
-                    let mut next = vec![false; chars.len() + 1];
-                    next[0] = *token == '*' && previous[0];
-                    for j in 1..=chars.len() {
-                        next[j] = if *token == '*' {
-                            previous[j] || next[j - 1]
-                        } else {
-                            previous[j - 1] && (*token == '?' || *token == chars[j - 1])
-                        };
-                    }
-                    previous = next;
-                }
-                previous[chars.len()]
-            })
+            .filter(|word| pattern.matches(word))
             .collect()
     }
 

@@ -78,3 +78,12 @@ fn star_matches_zero_or_more_scalars_without_duplicate_results() {
     assert_eq!(trie.wildcard("a*"), ["a", "ab", "abb", "acb"]);
     assert_eq!(trie.wildcard("*?"), ["a", "ab", "abb", "acb", "ba", "🦀"]);
 }
+
+#[test]
+fn escaped_wildcards_and_backslashes_match_literal_characters() {
+    let trie: Trie = ["a*b", "a?b", r"a\b", "axb", r"a\"].into_iter().collect();
+    assert_eq!(trie.wildcard(r"a\*b"), ["a*b"]);
+    assert_eq!(trie.wildcard(r"a\?b"), ["a?b"]);
+    assert_eq!(trie.wildcard(r"a\\b"), [r"a\b"]);
+    assert_eq!(trie.wildcard(r"a\"), [r"a\"]);
+}
