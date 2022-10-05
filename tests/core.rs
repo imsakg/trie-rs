@@ -36,3 +36,15 @@ fn length_counts_unique_words_and_insert_reports_changes() {
     assert_eq!(trie.len(), 2);
     assert!(!trie.is_empty());
 }
+
+#[test]
+fn unicode_empty_and_punctuation_words_are_not_filtered() {
+    let mut trie = Trie::new();
+    for word in ["", "éclair", "東京", "🦀", "a-b", "line\nbreak", "42"] {
+        trie.insert(word);
+        assert!(trie.contains(word));
+    }
+    assert_eq!(trie.len(), 7);
+    assert!(!trie.contains("écla"));
+    assert!(!trie.contains("東"));
+}
