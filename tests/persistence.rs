@@ -189,3 +189,55 @@ fn raw_record_controls_are_rejected_instead_of_becoming_hidden_key_suffixes() {
         );
     }
 }
+
+#[test]
+fn import_errors_preserve_prior_records_but_not_an_unfinished_record() {
+    use std::io::{self, BufReader, Read};
+    struct ThenError(&'static [u8]);
+    impl Read for ThenError {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            if self.0.is_empty() {
+                return Err(io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "source failed",
+                ));
+            }
+            let size = buffer.len().min(self.0.len());
+            buffer[..size].copy_from_slice(&self.0[..size]);
+            self.0 = &self.0[size..];
+            Ok(size)
+        }
+    }
+    let mut trie = Trie::case_insensitive();
+    trie.insert("prior");
+    let error = trie
+        .import_words(BufReader::new(ThenError(b"GOOD\nunfinished")))
+        .unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
+    assert_eq!(trie.words(), ["good", "prior"]);
+    let error = Trie::from_reader(BufReader::new(ThenError(b"TRIE\t1\tS\nword\n"))).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
+}
+
+#[test]
+fn a_zero_progress_writer_returns_write_zero_without_looping() {
+    use std::io::{self, Write};
+    struct Zero;
+    impl Write for Zero {
+        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
+            Ok(0)
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let trie: Trie = ["word"].into_iter().collect();
+    assert_eq!(
+        trie.to_writer(Zero).unwrap_err().kind(),
+        io::ErrorKind::WriteZero
+    );
+    assert_eq!(
+        trie.export_words(Zero).unwrap_err().kind(),
+        io::ErrorKind::WriteZero
+    );
+}
