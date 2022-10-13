@@ -102,3 +102,31 @@ fn prefix_and_longest_queries_agree_with_ordered_set_filters() {
         }
     }
 }
+
+#[test]
+fn randomized_snapshots_round_trip_and_are_byte_stable() {
+    let alphabet = ['a', 'Z', 'é', '🦀', '\n', '\r', '\t', '\0', '\\'];
+    for insensitive in [false, true] {
+        let mut state = 819;
+        let mut trie = if insensitive {
+            Trie::case_insensitive()
+        } else {
+            Trie::new()
+        };
+        for _ in 0..300 {
+            let size = (next(&mut state) % 9) as usize;
+            let word: String = (0..size)
+                .map(|_| alphabet[(next(&mut state) % alphabet.len() as u64) as usize])
+                .collect();
+            trie.insert(word);
+        }
+        let mut bytes = Vec::new();
+        trie.to_writer(&mut bytes).unwrap();
+        let restored = Trie::from_reader(bytes.as_slice()).unwrap();
+        assert_eq!(restored.words(), trie.words());
+        assert_eq!(restored.is_case_insensitive(), insensitive);
+        let mut again = Vec::new();
+        restored.to_writer(&mut again).unwrap();
+        assert_eq!(bytes, again);
+    }
+}
