@@ -49,3 +49,24 @@ fn persistence_round_trips_every_special_scalar_and_empty_word() {
     restored.to_writer(&mut second).unwrap();
     assert_eq!(bytes, second);
 }
+
+#[test]
+fn corrupt_snapshots_fail_instead_of_silently_losing_data() {
+    use std::io::ErrorKind;
+    for bytes in [
+        &b""[..],
+        &b"TRIE\t9\tS\n"[..],
+        &b"TRIE\t1\tX\n"[..],
+        &b"TRIE\t1\tS"[..],
+        &b"TRIE\t1\tS\nword"[..],
+        &b"TRIE\t1\tS\nbad\\q\n"[..],
+        &b"TRIE\t1\tS\n\\\n"[..],
+        &b"TRIE\t1\tS\n\xff\n"[..],
+    ] {
+        assert_eq!(
+            Trie::from_reader(bytes).unwrap_err().kind(),
+            ErrorKind::InvalidData,
+            "{bytes:?}"
+        );
+    }
+}
