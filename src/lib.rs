@@ -1,4 +1,5 @@
 mod pattern;
+mod persistence;
 
 use std::{borrow::Cow, collections::BTreeMap};
 #[derive(Clone, Debug)]
