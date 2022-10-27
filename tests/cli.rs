@@ -170,3 +170,17 @@ fn delete_prunes_only_requested_words_and_can_replace_the_loaded_snapshot() {
     assert_eq!(restored.words(), ["cart", "cat"]);
     assert!(restored.has_prefix("car"));
 }
+
+#[test]
+fn longest_prints_the_longest_stored_prefix_or_exits_one() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "a\napp\napple\n").unwrap();
+    let path = path.to_str().unwrap();
+    let output = cli(&["--words", path, "longest", "applesauce"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "apple\n");
+    let absent = cli(&["--words", path, "longest", "z"]);
+    assert_eq!(absent.status.code(), Some(1));
+    assert!(absent.stdout.is_empty());
+}

@@ -177,6 +177,16 @@ fn execute(
             writeln!(output, "{removed}")?;
             Ok(0)
         }
+        "longest" => {
+            arity(args, 1, command)?;
+            match trie.longest_prefix(&args[0]) {
+                Some(word) => {
+                    writeln!(output, "{word}")?;
+                    Ok(0)
+                }
+                None => Ok(1),
+            }
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
