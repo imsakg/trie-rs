@@ -60,3 +60,18 @@ fn prefix_and_count_commands_query_paths_without_requiring_a_word() {
         Some(1)
     );
 }
+
+#[test]
+fn complete_honors_a_global_numeric_limit() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "cat\ncart\ncar\ndog\n").unwrap();
+    let path = path.to_str().unwrap();
+    let output = cli(&["--words", path, "--limit", "2", "complete", "ca"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "car\ncart\n");
+    assert_eq!(
+        stdout(&cli(&["--words", path, "--limit", "0", "complete", "ca"])),
+        ""
+    );
+}

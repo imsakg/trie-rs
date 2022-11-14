@@ -10,13 +10,28 @@ fn invalid(message: impl Into<String>) -> io::Error {
 
 struct Options {
     words: Vec<String>,
+    limit: Option<usize>,
 }
 
 fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
-    let mut options = Options { words: Vec::new() };
+    let mut options = Options {
+        words: Vec::new(),
+        limit: None,
+    };
     let mut args = args.into_iter().peekable();
     loop {
         match args.peek().map(String::as_str) {
+            Some("--limit") => {
+                args.next();
+                let value = args
+                    .next()
+                    .ok_or_else(|| invalid("--limit requires a number"))?;
+                options.limit = Some(
+                    value
+                        .parse()
+                        .map_err(|_| invalid("--limit requires a non-negative integer"))?,
+                );
+            }
             Some("--words") => {
                 args.next();
                 options.words.push(
@@ -47,7 +62,13 @@ pub fn run(args: Vec<String>, output: &mut impl Write) -> io::Result<u8> {
     for path in options.words {
         trie.import_words(BufReader::new(File::open(path)?))?;
     }
-    execute(&mut trie, &args[0], &args[1..], output)
+    execute(
+        &mut trie,
+        &args[0],
+        &args[1..],
+        options.limit.unwrap_or(usize::MAX),
+        output,
+    )
 }
 
 fn arity(args: &[String], expected: usize, command: &str) -> io::Result<()> {
@@ -62,6 +83,7 @@ fn execute(
     trie: &mut Trie,
     command: &str,
     args: &[String],
+    limit: usize,
     output: &mut impl Write,
 ) -> io::Result<u8> {
     match command {
@@ -85,6 +107,13 @@ fn execute(
         "count" => {
             arity(args, 1, command)?;
             writeln!(output, "{}", trie.count_prefix(&args[0]))?;
+            Ok(0)
+        }
+        "complete" => {
+            arity(args, 1, command)?;
+            for word in trie.autocomplete_with_limit(&args[0], limit) {
+                writeln!(output, "{word}")?;
+            }
             Ok(0)
         }
         _ => Err(invalid(format!("unknown command: {command}"))),
