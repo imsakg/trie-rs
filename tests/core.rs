@@ -106,3 +106,13 @@ fn clear_discards_words_and_all_prefix_edges() {
     assert!(trie.insert("again"));
     assert_eq!(trie.len(), 1);
 }
+
+#[test]
+fn extend_accepts_borrowed_batches_with_set_semantics() {
+    let mut trie = Trie::new();
+    trie.extend(["a", "b", "a"]);
+    assert_eq!(trie.len(), 2);
+    assert!(trie.contains("a"));
+    trie.extend(vec![String::from("c")]);
+    assert!(trie.contains("c"));
+}

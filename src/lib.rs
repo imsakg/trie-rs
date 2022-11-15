@@ -34,6 +34,14 @@ impl Default for TrieNode {
     }
 }
 
+impl<S: AsRef<str>> Extend<S> for Trie {
+    fn extend<I: IntoIterator<Item = S>>(&mut self, iter: I) {
+        for word in iter {
+            self.insert(word);
+        }
+    }
+}
+
 impl Trie {
     pub fn new() -> Self {
         Self {
