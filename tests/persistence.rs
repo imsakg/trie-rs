@@ -1,4 +1,5 @@
 use trie::Trie;
+mod common;
 
 #[test]
 fn writer_emits_a_versioned_sorted_dictionary() {
@@ -69,4 +70,16 @@ fn corrupt_snapshots_fail_instead_of_silently_losing_data() {
             "{bytes:?}"
         );
     }
+}
+
+#[test]
+fn load_reads_a_dictionary_file_and_reports_missing_paths() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words.trie");
+    std::fs::write(&path, "TRIE\t1\tS\nhello\n").unwrap();
+    assert_eq!(Trie::load(&path).unwrap().words(), ["hello"]);
+    assert_eq!(
+        Trie::load(temp.path().join("missing")).unwrap_err().kind(),
+        std::io::ErrorKind::NotFound
+    );
 }

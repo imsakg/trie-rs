@@ -1,8 +1,17 @@
 //! Versioned UTF-8 persistence; one escaped word per line.
 use crate::Trie;
-use std::io::{self, BufRead, Write};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+    path::Path,
+};
 
 impl Trie {
+    /// Load a versioned snapshot from a UTF-8 dictionary file.
+    pub fn load(path: impl AsRef<Path>) -> io::Result<Self> {
+        Self::from_reader(BufReader::new(File::open(path)?))
+    }
+
     /// Read a v1 snapshot; invalid UTF-8, headers, escapes, and unterminated lines fail.
     pub fn from_reader<R: BufRead>(mut reader: R) -> io::Result<Self> {
         let mut line = String::new();
