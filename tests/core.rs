@@ -79,3 +79,17 @@ fn remove_reports_membership_and_keeps_other_words() {
     assert!(!trie.remove(""));
     assert_eq!(trie.len(), 1);
 }
+
+#[test]
+fn deleting_a_longer_word_preserves_its_terminal_prefix() {
+    let mut trie = Trie::new();
+    trie.insert("🦀");
+    trie.insert("🦀rust");
+    assert!(trie.remove("🦀rust"));
+    assert!(trie.contains("🦀"));
+    assert!(!trie.has_prefix("🦀r"));
+    assert!(trie.remove("🦀"));
+    assert!(trie.is_empty());
+    assert!(!trie.has_prefix("🦀"));
+    assert!(!trie.remove("missing"));
+}
