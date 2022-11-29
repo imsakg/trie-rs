@@ -46,11 +46,13 @@ impl Trie {
             .parent()
             .filter(|p| !p.as_os_str().is_empty())
             .unwrap_or_else(|| Path::new("."));
-        let (mut file, pending) = temporary_file(parent)?;
+        let (mut file, mut pending) = temporary_file(parent, path)?;
         self.to_writer(&mut file)?;
         file.sync_all()?;
         drop(file);
-        std::fs::rename(&pending.0, path)
+        std::fs::rename(pending.0.as_ref().expect("temporary file is armed"), path)?;
+        pending.0 = None;
+        Ok(())
     }
 
     /// Load a versioned snapshot from a UTF-8 dictionary file.
@@ -133,14 +135,16 @@ fn decode(word: &str) -> io::Result<String> {
     Ok(output)
 }
 
-struct PendingFile(std::path::PathBuf);
+struct PendingFile(Option<std::path::PathBuf>);
 impl Drop for PendingFile {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.0);
+        if let Some(path) = &self.0 {
+            let _ = std::fs::remove_file(path);
+        }
     }
 }
 
-fn temporary_file(parent: &Path) -> io::Result<(File, PendingFile)> {
+fn temporary_file(parent: &Path, destination: &Path) -> io::Result<(File, PendingFile)> {
     use std::sync::atomic::{AtomicU64, Ordering};
     static NEXT: AtomicU64 = AtomicU64::new(0);
     for _ in 0..32 {
@@ -149,12 +153,15 @@ fn temporary_file(parent: &Path) -> io::Result<(File, PendingFile)> {
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
+        if path.file_name() == destination.file_name() {
+            continue;
+        }
         match std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
             .open(&path)
         {
-            Ok(file) => return Ok((file, PendingFile(path))),
+            Ok(file) => return Ok((file, PendingFile(Some(path)))),
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
             Err(error) => return Err(error),
         }

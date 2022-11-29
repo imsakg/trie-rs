@@ -166,3 +166,15 @@ fn export_words_is_sorted_and_rejects_unrepresentable_line_breaks() {
         assert!(bytes.is_empty());
     }
 }
+
+#[test]
+fn save_accepts_a_destination_that_looks_like_a_temporary_filename() {
+    let temp = common::temp_dir();
+    let path = temp
+        .path()
+        .join(format!(".trie-{}-0.tmp", std::process::id()));
+    let trie: Trie = ["must survive"].into_iter().collect();
+    trie.save(&path).unwrap();
+    assert_eq!(Trie::load(&path).unwrap().words(), ["must survive"]);
+    assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
+}
