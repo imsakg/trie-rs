@@ -128,23 +128,19 @@ impl Trie {
 
     /// Return all stored words in Unicode scalar lexicographic order.
     pub fn words(&self) -> Vec<String> {
-        let mut words = Vec::with_capacity(self.len);
-        let mut stack = vec![(&self.root, String::new())];
-        while let Some((node, word)) = stack.pop() {
-            if node.is_word {
-                words.push(word.clone());
-            }
-            for (ch, child) in node.children.iter().rev() {
-                let mut next = word.clone();
-                next.push(*ch);
-                stack.push((child, next));
-            }
-        }
-        words
+        self.autocomplete("")
     }
 
     /// Return complete words that start with `prefix`, in lexical order.
     pub fn autocomplete(&self, prefix: impl AsRef<str>) -> Vec<String> {
+        self.autocomplete_with_limit(prefix, usize::MAX)
+    }
+
+    /// Return at most `limit` completions, stopping traversal when it is reached.
+    pub fn autocomplete_with_limit(&self, prefix: impl AsRef<str>, limit: usize) -> Vec<String> {
+        if limit == 0 {
+            return Vec::new();
+        }
         let prefix = prefix.as_ref();
         let Some(root) = self.node(prefix) else {
             return Vec::new();
@@ -154,6 +150,9 @@ impl Trie {
         while let Some((node, word)) = stack.pop() {
             if node.is_word {
                 words.push(word.clone());
+                if words.len() == limit {
+                    break;
+                }
             }
             for (ch, child) in node.children.iter().rev() {
                 let mut next = word.clone();

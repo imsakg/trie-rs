@@ -17,3 +17,14 @@ fn autocomplete_returns_only_words_below_the_prefix() {
     assert!(trie.autocomplete("missing").is_empty());
     assert_eq!(trie.autocomplete(""), trie.words());
 }
+
+#[test]
+fn completion_limits_are_sorted_and_zero_is_empty() {
+    let trie: Trie = ["ab", "a", "ac", "b"].into_iter().collect();
+    assert_eq!(trie.autocomplete_with_limit("a", 2), ["a", "ab"]);
+    assert!(trie.autocomplete_with_limit("a", 0).is_empty());
+    assert_eq!(
+        trie.autocomplete_with_limit("a", usize::MAX),
+        ["a", "ab", "ac"]
+    );
+}
