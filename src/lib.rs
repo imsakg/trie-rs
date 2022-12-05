@@ -143,6 +143,27 @@ impl Trie {
         words
     }
 
+    /// Return complete words that start with `prefix`, in lexical order.
+    pub fn autocomplete(&self, prefix: impl AsRef<str>) -> Vec<String> {
+        let prefix = prefix.as_ref();
+        let Some(root) = self.node(prefix) else {
+            return Vec::new();
+        };
+        let mut words = Vec::new();
+        let mut stack = vec![(root, prefix.to_owned())];
+        while let Some((node, word)) = stack.pop() {
+            if node.is_word {
+                words.push(word.clone());
+            }
+            for (ch, child) in node.children.iter().rev() {
+                let mut next = word.clone();
+                next.push(*ch);
+                stack.push((child, next));
+            }
+        }
+        words
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {
