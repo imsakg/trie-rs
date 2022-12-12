@@ -177,6 +177,23 @@ impl Trie {
         count
     }
 
+    /// Longest stored word that is a prefix of the input.
+    pub fn longest_prefix(&self, input: impl AsRef<str>) -> Option<String> {
+        let input = input.as_ref();
+        let mut node = &self.root;
+        let mut end = node.is_word.then_some(0);
+        for (index, ch) in input.char_indices() {
+            let Some(child) = node.children.get(&ch) else {
+                break;
+            };
+            node = child;
+            if node.is_word {
+                end = Some(index + ch.len_utf8());
+            }
+        }
+        end.map(|end| input[..end].to_owned())
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {

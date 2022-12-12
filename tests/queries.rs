@@ -37,3 +37,14 @@ fn count_prefix_includes_terminal_prefix_and_empty_word() {
     assert_eq!(trie.count_prefix("ab"), 2);
     assert_eq!(trie.count_prefix("z"), 0);
 }
+
+#[test]
+fn longest_prefix_returns_a_word_not_just_a_path() {
+    let mut trie: Trie = ["a", "app", "apple", "é"].into_iter().collect();
+    assert_eq!(trie.longest_prefix("applesauce").as_deref(), Some("apple"));
+    assert_eq!(trie.longest_prefix("apt").as_deref(), Some("a"));
+    assert_eq!(trie.longest_prefix("éclair").as_deref(), Some("é"));
+    assert_eq!(trie.longest_prefix("z"), None);
+    trie.insert("");
+    assert_eq!(trie.longest_prefix("z").as_deref(), Some(""));
+}
