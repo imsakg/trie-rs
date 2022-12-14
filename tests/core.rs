@@ -48,3 +48,15 @@ fn unicode_empty_and_punctuation_words_are_not_filtered() {
     assert!(!trie.contains("écla"));
     assert!(!trie.contains("東"));
 }
+
+#[test]
+fn prefix_search_distinguishes_paths_from_words() {
+    let mut trie = Trie::new();
+    assert!(trie.has_prefix(""));
+    assert!(!trie.has_prefix("ca"));
+    trie.insert("cat");
+    assert!(trie.has_prefix("ca"));
+    assert!(!trie.contains("ca"));
+    assert!(trie.has_prefix("cat"));
+    assert!(!trie.has_prefix("cats"));
+}

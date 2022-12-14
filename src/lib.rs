@@ -74,6 +74,18 @@ impl Trie {
         self.len == 0
     }
 
+    /// Whether an edge path exists. The empty prefix always exists.
+    pub fn has_prefix(&self, prefix: impl AsRef<str>) -> bool {
+        let mut node = &self.root;
+        for ch in prefix.as_ref().chars() {
+            match node.children.get(&ch) {
+                Some(child) => node = child,
+                None => return false,
+            }
+        }
+        true
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {
