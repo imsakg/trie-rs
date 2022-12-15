@@ -9,10 +9,25 @@ pub struct Trie {
     case_insensitive: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct TrieNode {
     children: BTreeMap<char, TrieNode>,
     is_word: bool,
+}
+
+impl Clone for TrieNode {
+    fn clone(&self) -> Self {
+        let mut copy = Self::new();
+        let mut pending = vec![(self, &mut copy)];
+        while let Some((source, target)) = pending.pop() {
+            target.is_word = source.is_word;
+            target
+                .children
+                .extend(source.children.keys().map(|ch| (*ch, Self::new())));
+            pending.extend(source.children.values().zip(target.children.values_mut()));
+        }
+        copy
+    }
 }
 
 impl Drop for TrieNode {

@@ -47,3 +47,15 @@ fn removing_a_deep_word_is_stack_safe_and_prunes_the_path() {
         },
     );
 }
+
+#[test]
+fn cloning_a_deep_word_is_stack_safe() {
+    isolated("cloning_a_deep_word_is_stack_safe", || {
+        let word = "a".repeat(100_000);
+        let mut trie = Trie::new();
+        trie.insert(&word);
+        let copy = trie.clone();
+        assert!(copy.contains(&word));
+        assert_eq!(copy.len(), 1);
+    });
+}
