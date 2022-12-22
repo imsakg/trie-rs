@@ -207,3 +207,29 @@ fn len_and_clear_commands_report_distinct_and_removed_word_counts() {
     assert!(restored.is_empty());
     assert!(restored.is_case_insensitive());
 }
+
+#[test]
+fn import_and_export_commands_interchange_plain_word_lists() {
+    let temp = common::temp_dir();
+    let source = temp.path().join("source");
+    let snapshot = temp.path().join("snapshot");
+    let destination = temp.path().join("exported");
+    std::fs::write(&source, "Pear\napple\nPear\n").unwrap();
+    let output = cli(&[
+        "-i",
+        "--save",
+        snapshot.to_str().unwrap(),
+        "import",
+        source.to_str().unwrap(),
+    ]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "2\n");
+    let output = cli(&[
+        "--load",
+        snapshot.to_str().unwrap(),
+        "export",
+        destination.to_str().unwrap(),
+    ]);
+    assert!(output.status.success());
+    assert_eq!(std::fs::read(destination).unwrap(), b"apple\npear\n");
+}

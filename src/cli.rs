@@ -199,6 +199,19 @@ fn execute(
             writeln!(output, "{removed}")?;
             Ok(0)
         }
+        "import" => {
+            arity(args, 1, command)?;
+            let added = trie.import_words(BufReader::new(File::open(&args[0])?))?;
+            writeln!(output, "{added}")?;
+            Ok(0)
+        }
+        "export" => {
+            arity(args, 1, command)?;
+            let mut bytes = Vec::new();
+            trie.export_words(&mut bytes)?;
+            std::fs::write(&args[0], bytes)?;
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
