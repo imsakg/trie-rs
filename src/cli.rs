@@ -82,6 +82,9 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
 
 pub fn run(args: Vec<String>, output: &mut impl Write) -> io::Result<u8> {
     let (options, args) = parse(args)?;
+    if options.limit.is_some() && !matches!(args[0].as_str(), "complete" | "match") {
+        return Err(invalid("--limit is only valid for complete and match"));
+    }
     let mut trie = options
         .load
         .as_ref()

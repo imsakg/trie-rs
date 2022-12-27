@@ -274,3 +274,25 @@ fn non_utf8_arguments_report_an_error_instead_of_panicking() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("UTF-8"));
     assert!(!String::from_utf8_lossy(&output.stderr).contains("panicked"));
 }
+
+#[test]
+fn invalid_limits_and_argument_counts_never_save_a_dictionary() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("must-not-exist");
+    let path = path.to_str().unwrap();
+    for args in [
+        vec!["--save", path, "--limit", "-1", "complete", ""],
+        vec!["--save", path, "--limit", "x", "match", "*"],
+        vec!["--save", path, "--limit", "1", "len"],
+        vec!["--save", path, "search"],
+        vec!["--save", path, "insert"],
+        vec!["--save", path, "delete"],
+        vec!["--save", path, "list", "extra"],
+        vec!["--save", path, "unknown"],
+    ] {
+        let output = cli(&args);
+        assert_eq!(output.status.code(), Some(2), "{args:?}");
+        assert!(!output.stderr.is_empty());
+        assert!(!std::path::Path::new(path).exists());
+    }
+}
