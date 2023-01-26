@@ -12,6 +12,7 @@ struct Options {
     words: Vec<String>,
     limit: Option<usize>,
     ignore_case: bool,
+    load: Option<String>,
 }
 
 fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
@@ -19,6 +20,7 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
         words: Vec::new(),
         limit: None,
         ignore_case: false,
+        load: None,
     };
     let mut args = args.into_iter().peekable();
     loop {
@@ -26,6 +28,13 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
             Some("--ignore-case" | "-i") => {
                 args.next();
                 options.ignore_case = true;
+            }
+            Some("--load") => {
+                args.next();
+                options.load = Some(
+                    args.next()
+                        .ok_or_else(|| invalid("--load requires a path"))?,
+                );
             }
             Some("--limit") => {
                 args.next();
@@ -64,11 +73,17 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
 
 pub fn run(args: Vec<String>, output: &mut impl Write) -> io::Result<u8> {
     let (options, args) = parse(args)?;
-    let mut trie = if options.ignore_case {
-        Trie::case_insensitive()
-    } else {
-        Trie::new()
-    };
+    let mut trie = options
+        .load
+        .as_ref()
+        .map(Trie::load)
+        .transpose()?
+        .unwrap_or_default();
+    if options.ignore_case && !trie.is_case_insensitive() {
+        let mut lowercase = Trie::case_insensitive();
+        lowercase.extend(trie.words());
+        trie = lowercase;
+    }
     for path in options.words {
         trie.import_words(BufReader::new(File::open(path)?))?;
     }

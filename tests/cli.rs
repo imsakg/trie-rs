@@ -111,3 +111,19 @@ fn ignore_case_normalizes_loaded_word_lists_and_queries() {
         Some(1)
     );
 }
+
+#[test]
+fn snapshot_loading_preserves_mode_and_can_explicitly_lowercase_keys() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words.trie");
+    let mut folded = trie::Trie::case_insensitive();
+    folded.insert("Rust");
+    folded.save(&path).unwrap();
+    let output = cli(&["--load", path.to_str().unwrap(), "search", "RUST"]);
+    assert_eq!(output.status.code(), Some(0));
+    let sensitive: trie::Trie = ["Rust", "RUST"].into_iter().collect();
+    sensitive.save(&path).unwrap();
+    let output = cli(&["--load", path.to_str().unwrap(), "-i", "list"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "rust\n");
+}
