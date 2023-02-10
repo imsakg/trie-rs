@@ -127,3 +127,24 @@ fn snapshot_loading_preserves_mode_and_can_explicitly_lowercase_keys() {
     assert!(output.status.success());
     assert_eq!(stdout(&output), "rust\n");
 }
+
+#[test]
+fn insert_counts_new_words_and_persists_them_when_save_is_requested() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("dictionary.trie");
+    let output = cli(&[
+        "-i",
+        "--save",
+        path.to_str().unwrap(),
+        "insert",
+        "Rust",
+        "RUST",
+        "Ruby",
+        "",
+    ]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "3\n");
+    let restored = trie::Trie::load(&path).unwrap();
+    assert!(restored.is_case_insensitive());
+    assert_eq!(restored.words(), ["", "ruby", "rust"]);
+}

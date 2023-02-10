@@ -13,6 +13,7 @@ struct Options {
     limit: Option<usize>,
     ignore_case: bool,
     load: Option<String>,
+    save: Option<String>,
 }
 
 fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
@@ -21,6 +22,7 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
         limit: None,
         ignore_case: false,
         load: None,
+        save: None,
     };
     let mut args = args.into_iter().peekable();
     loop {
@@ -28,6 +30,13 @@ fn parse(args: Vec<String>) -> io::Result<(Options, Vec<String>)> {
             Some("--ignore-case" | "-i") => {
                 args.next();
                 options.ignore_case = true;
+            }
+            Some("--save") => {
+                args.next();
+                options.save = Some(
+                    args.next()
+                        .ok_or_else(|| invalid("--save requires a path"))?,
+                );
             }
             Some("--load") => {
                 args.next();
@@ -87,13 +96,17 @@ pub fn run(args: Vec<String>, output: &mut impl Write) -> io::Result<u8> {
     for path in options.words {
         trie.import_words(BufReader::new(File::open(path)?))?;
     }
-    execute(
+    let code = execute(
         &mut trie,
         &args[0],
         &args[1..],
         options.limit.unwrap_or(usize::MAX),
         output,
-    )
+    )?;
+    if let Some(path) = options.save {
+        trie.save(path)?;
+    }
+    Ok(code)
 }
 
 fn arity(args: &[String], expected: usize, command: &str) -> io::Result<()> {
@@ -146,6 +159,14 @@ fn execute(
             for word in trie.wildcard_with_limit(&args[0], limit) {
                 writeln!(output, "{word}")?;
             }
+            Ok(0)
+        }
+        "insert" => {
+            if args.is_empty() {
+                return Err(invalid("insert requires at least one word"));
+            }
+            let added = args.iter().filter(|word| trie.insert(word)).count();
+            writeln!(output, "{added}")?;
             Ok(0)
         }
         _ => Err(invalid(format!("unknown command: {command}"))),
