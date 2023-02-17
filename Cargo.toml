@@ -2,7 +2,10 @@
 name = "trie"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A deterministic Unicode string trie with autocomplete, wildcard queries, persistence, and a CLI"
+repository = "https://github.com/imsakg/trie-rs"
+readme = "README.md"
+keywords = ["trie", "autocomplete", "dictionary", "prefix", "cli"]
+categories = ["data-structures", "command-line-utilities"]
 
 [dependencies]

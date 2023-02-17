@@ -13,6 +13,7 @@
 //! Unicode scalar values, not grapheme clusters. Case-insensitive tries store
 //! Unicode lowercase keys rather than full case-folded keys or original spelling.
 #![warn(missing_docs)]
+#![forbid(unsafe_code)]
 
 mod pattern;
 mod persistence;
