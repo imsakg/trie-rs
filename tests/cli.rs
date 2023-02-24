@@ -244,3 +244,33 @@ fn tree_command_prints_stable_plain_text() {
     assert_eq!(stdout(&output), "a (*)\n b (*)\nb (*)\n");
     assert!(!output.stdout.contains(&27));
 }
+
+#[test]
+fn version_and_no_argument_help_are_safe_outside_the_repository() {
+    let output = cli(&["--version"]);
+    assert!(output.status.success());
+    assert_eq!(
+        stdout(&output),
+        format!("trie {}\n", env!("CARGO_PKG_VERSION"))
+    );
+    let temp = common::temp_dir();
+    let output = Command::new(env!("CARGO_BIN_EXE_trie"))
+        .current_dir(temp.path())
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert!(stdout(&output).contains("Usage: trie"));
+}
+
+#[cfg(unix)]
+#[test]
+fn non_utf8_arguments_report_an_error_instead_of_panicking() {
+    use std::os::unix::ffi::OsStringExt;
+    let output = Command::new(env!("CARGO_BIN_EXE_trie"))
+        .arg(std::ffi::OsString::from_vec(vec![255]))
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("UTF-8"));
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("panicked"));
+}
