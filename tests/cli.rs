@@ -148,3 +148,25 @@ fn insert_counts_new_words_and_persists_them_when_save_is_requested() {
     assert!(restored.is_case_insensitive());
     assert_eq!(restored.words(), ["", "ruby", "rust"]);
 }
+
+#[test]
+fn delete_prunes_only_requested_words_and_can_replace_the_loaded_snapshot() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("dictionary.trie");
+    let trie: trie::Trie = ["car", "cart", "cat"].into_iter().collect();
+    trie.save(&path).unwrap();
+    let output = cli(&[
+        "--load",
+        path.to_str().unwrap(),
+        "--save",
+        path.to_str().unwrap(),
+        "delete",
+        "car",
+        "missing",
+    ]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "1\n");
+    let restored = trie::Trie::load(&path).unwrap();
+    assert_eq!(restored.words(), ["cart", "cat"]);
+    assert!(restored.has_prefix("car"));
+}

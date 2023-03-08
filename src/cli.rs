@@ -169,6 +169,14 @@ fn execute(
             writeln!(output, "{added}")?;
             Ok(0)
         }
+        "delete" => {
+            if args.is_empty() {
+                return Err(invalid("delete requires at least one word"));
+            }
+            let removed = args.iter().filter(|word| trie.remove(word)).count();
+            writeln!(output, "{removed}")?;
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
