@@ -104,6 +104,12 @@ impl Trie {
         removed
     }
 
+    /// Discard all words while retaining the trie's configuration.
+    pub fn clear(&mut self) {
+        self.root = TrieNode::new();
+        self.len = 0;
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {

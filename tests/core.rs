@@ -93,3 +93,16 @@ fn deleting_a_longer_word_preserves_its_terminal_prefix() {
     assert!(!trie.has_prefix("🦀"));
     assert!(!trie.remove("missing"));
 }
+
+#[test]
+fn clear_discards_words_and_all_prefix_edges() {
+    let mut trie = Trie::new();
+    trie.insert("clear");
+    trie.insert("");
+    trie.clear();
+    assert!(trie.is_empty());
+    assert!(!trie.contains(""));
+    assert!(!trie.has_prefix("c"));
+    assert!(trie.insert("again"));
+    assert_eq!(trie.len(), 1);
+}
