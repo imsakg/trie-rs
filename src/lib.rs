@@ -180,19 +180,35 @@ impl Trie {
             return Vec::new();
         };
         let mut words = Vec::new();
-        let mut stack = vec![(root, prefix.into_owned())];
-        while let Some((node, word)) = stack.pop() {
+        let mut word = prefix.into_owned();
+        if root.is_word {
+            words.push(word.clone());
+            if words.len() == limit {
+                return words;
+            }
+        }
+        let mut stack: Vec<_> = root
+            .children
+            .iter()
+            .rev()
+            .map(|(ch, child)| (child, *ch, word.len()))
+            .collect();
+        while let Some((node, ch, parent_len)) = stack.pop() {
+            word.truncate(parent_len);
+            word.push(ch);
             if node.is_word {
                 words.push(word.clone());
                 if words.len() == limit {
                     break;
                 }
             }
-            for (ch, child) in node.children.iter().rev() {
-                let mut next = word.clone();
-                next.push(*ch);
-                stack.push((child, next));
-            }
+            let parent_len = word.len();
+            stack.extend(
+                node.children
+                    .iter()
+                    .rev()
+                    .map(|(ch, child)| (child, *ch, parent_len)),
+            );
         }
         words
     }

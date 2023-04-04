@@ -59,3 +59,16 @@ fn cloning_a_deep_word_is_stack_safe() {
         assert_eq!(copy.len(), 1);
     });
 }
+
+#[test]
+fn enumeration_of_a_deep_word_preserves_the_complete_key() {
+    isolated(
+        "enumeration_of_a_deep_word_preserves_the_complete_key",
+        || {
+            let word = "🦀".repeat(25_000);
+            let mut trie = Trie::new();
+            trie.insert(&word);
+            assert_eq!(trie.autocomplete_with_limit("", 1), [word]);
+        },
+    );
+}
