@@ -94,3 +94,19 @@ fn save_replaces_a_file_and_cleans_up_temporary_files() {
     assert_eq!(Trie::load(&path).unwrap().words(), trie.words());
     assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
 }
+
+#[test]
+fn failed_save_keeps_destination_directory_and_removes_sibling_tempfiles() {
+    let temp = common::temp_dir();
+    let destination = temp.path().join("directory");
+    std::fs::create_dir(&destination).unwrap();
+    std::fs::write(destination.join("keep"), b"untouched").unwrap();
+    let trie: Trie = ["word"].into_iter().collect();
+    assert!(trie.save(&destination).is_err());
+    assert_eq!(
+        std::fs::read(destination.join("keep")).unwrap(),
+        b"untouched"
+    );
+    assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
+    assert!(trie.save(temp.path().join("missing").join("file")).is_err());
+}
