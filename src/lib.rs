@@ -3,11 +3,13 @@ extern crate termion;
 use termion::color;
 
 use std::collections::BTreeMap;
+#[derive(Clone, Debug)]
 pub struct Trie {
     root: TrieNode,
     len: usize,
 }
 
+#[derive(Clone, Debug)]
 pub struct TrieNode {
     children: BTreeMap<char, TrieNode>,
     is_word: bool,

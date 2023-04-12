@@ -125,3 +125,14 @@ fn collect_builds_a_trie_from_any_string_iterator() {
     let empty: Trie = std::iter::empty::<String>().collect();
     assert!(empty.is_empty());
 }
+
+#[test]
+fn cloning_a_trie_produces_an_independent_dictionary() {
+    let original: Trie = ["apple", "pear"].into_iter().collect();
+    let mut copy = original.clone();
+    copy.remove("apple");
+    copy.insert("orange");
+    assert!(original.contains("apple"));
+    assert!(!original.contains("orange"));
+    assert!(format!("{copy:?}").contains("Trie"));
+}
