@@ -1,8 +1,9 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 #[derive(Clone, Debug)]
 pub struct Trie {
     root: TrieNode,
     len: usize,
+    case_insensitive: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -53,11 +54,13 @@ impl Trie {
         Self {
             root: TrieNode::new(),
             len: 0,
+            case_insensitive: false,
         }
     }
     pub fn insert(&mut self, word: impl AsRef<str>) -> bool {
+        let word = self.normalize(word.as_ref());
         let mut current_node = &mut self.root;
-        for c in word.as_ref().chars() {
+        for c in word.chars() {
             current_node = current_node.children.entry(c).or_default();
         }
         let added = !current_node.is_word;
@@ -67,7 +70,8 @@ impl Trie {
     }
 
     pub fn contains(&self, word: impl AsRef<str>) -> bool {
-        self.node(word.as_ref()).is_some_and(|node| node.is_word)
+        self.node(&self.normalize(word.as_ref()))
+            .is_some_and(|node| node.is_word)
     }
 
     fn node(&self, word: &str) -> Option<&TrieNode> {
@@ -190,6 +194,27 @@ impl Trie {
             }
         }
         end.map(|end| input[..end].to_owned())
+    }
+
+    /// Construct a trie using Unicode lowercase keys (not full Unicode case folding).
+    pub fn case_insensitive() -> Self {
+        Self {
+            case_insensitive: true,
+            ..Self::new()
+        }
+    }
+
+    /// Whether this dictionary stores and queries lowercase keys.
+    pub fn is_case_insensitive(&self) -> bool {
+        self.case_insensitive
+    }
+
+    fn normalize<'a>(&self, value: &'a str) -> Cow<'a, str> {
+        if self.case_insensitive {
+            Cow::Owned(value.to_lowercase())
+        } else {
+            Cow::Borrowed(value)
+        }
     }
 
     /// Render edge labels with one-space indentation per depth. No ANSI escapes.
