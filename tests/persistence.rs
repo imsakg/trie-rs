@@ -110,3 +110,30 @@ fn failed_save_keeps_destination_directory_and_removes_sibling_tempfiles() {
     assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
     assert!(trie.save(temp.path().join("missing").join("file")).is_err());
 }
+
+#[test]
+fn writer_and_flush_failures_are_returned_to_the_caller() {
+    use std::io::{self, Write};
+    struct Fails {
+        on_flush: bool,
+    }
+    impl Write for Fails {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            if self.on_flush {
+                Ok(bytes.len())
+            } else {
+                Err(io::Error::new(io::ErrorKind::BrokenPipe, "write failed"))
+            }
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Err(io::Error::new(io::ErrorKind::BrokenPipe, "flush failed"))
+        }
+    }
+    let trie: Trie = ["word"].into_iter().collect();
+    for on_flush in [false, true] {
+        assert_eq!(
+            trie.to_writer(Fails { on_flush }).unwrap_err().kind(),
+            io::ErrorKind::BrokenPipe
+        );
+    }
+}
