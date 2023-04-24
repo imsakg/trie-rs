@@ -1,6 +1,5 @@
-use lib::Trie;
 use std::{fs::File, io::BufRead};
-mod lib;
+use trie::Trie;
 
 const TEST: [&str; 10] = [
     "hello",
