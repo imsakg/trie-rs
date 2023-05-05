@@ -116,6 +116,13 @@ fn execute(
             }
             Ok(0)
         }
+        "match" => {
+            arity(args, 1, command)?;
+            for word in trie.wildcard_with_limit(&args[0], limit) {
+                writeln!(output, "{word}")?;
+            }
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }

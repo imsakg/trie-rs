@@ -75,3 +75,18 @@ fn complete_honors_a_global_numeric_limit() {
         ""
     );
 }
+
+#[test]
+fn match_command_supports_globs_without_shell_expansion() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "cat\ncot\ncart\ndog\n").unwrap();
+    let path = path.to_str().unwrap();
+    let output = cli(&["--words", path, "match", "c?t"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "cat\ncot\n");
+    assert_eq!(
+        stdout(&cli(&["--words", path, "--limit", "1", "match", "c*"])),
+        "cart\n"
+    );
+}
