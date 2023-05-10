@@ -28,3 +28,17 @@ fn list_imports_all_words_instead_of_filtering_punctuation_and_case() {
     assert!(output.status.success(), "{:?}", output);
     assert_eq!(stdout(&output), "42\nApple\na-b\nzebra\n");
 }
+
+#[test]
+fn search_prints_membership_and_sets_a_no_match_exit_status() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "rust\n").unwrap();
+    let path = path.to_str().unwrap();
+    let found = cli(&["--words", path, "search", "rust"]);
+    assert_eq!(found.status.code(), Some(0));
+    assert_eq!(stdout(&found), "true\n");
+    let absent = cli(&["--words", path, "search", "rus"]);
+    assert_eq!(absent.status.code(), Some(1));
+    assert_eq!(stdout(&absent), "false\n");
+}

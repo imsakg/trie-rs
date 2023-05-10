@@ -70,6 +70,12 @@ fn execute(
             trie.export_words(output)?;
             Ok(0)
         }
+        "search" => {
+            arity(args, 1, command)?;
+            let found = trie.contains(&args[0]);
+            writeln!(output, "{found}")?;
+            Ok(u8::from(!found))
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
