@@ -7,6 +7,27 @@ use std::{
 };
 
 impl Trie {
+    /// Save via a synced sibling temporary file and rename it over the destination.
+    /// Failure before rename leaves an existing destination untouched.
+    pub fn save(&self, path: impl AsRef<Path>) -> io::Result<()> {
+        let path = path.as_ref();
+        if path.file_name().is_none() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "destination must name a file",
+            ));
+        }
+        let parent = path
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        let (mut file, pending) = temporary_file(parent)?;
+        self.to_writer(&mut file)?;
+        file.sync_all()?;
+        drop(file);
+        std::fs::rename(&pending.0, path)
+    }
+
     /// Load a versioned snapshot from a UTF-8 dictionary file.
     pub fn load(path: impl AsRef<Path>) -> io::Result<Self> {
         Self::from_reader(BufReader::new(File::open(path)?))
@@ -85,4 +106,36 @@ fn decode(word: &str) -> io::Result<String> {
         });
     }
     Ok(output)
+}
+
+struct PendingFile(std::path::PathBuf);
+impl Drop for PendingFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+fn temporary_file(parent: &Path) -> io::Result<(File, PendingFile)> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    for _ in 0..32 {
+        let path = parent.join(format!(
+            ".trie-{}-{}.tmp",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => return Ok((file, PendingFile(path))),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "cannot reserve snapshot temporary file",
+    ))
 }

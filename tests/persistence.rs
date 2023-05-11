@@ -83,3 +83,14 @@ fn load_reads_a_dictionary_file_and_reports_missing_paths() {
         std::io::ErrorKind::NotFound
     );
 }
+
+#[test]
+fn save_replaces_a_file_and_cleans_up_temporary_files() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("dictionary.trie");
+    let trie: Trie = ["new", "words"].into_iter().collect();
+    std::fs::write(&path, b"old contents").unwrap();
+    trie.save(&path).unwrap();
+    assert_eq!(Trie::load(&path).unwrap().words(), trie.words());
+    assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 1);
+}
