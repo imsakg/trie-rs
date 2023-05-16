@@ -83,6 +83,16 @@ impl Trie {
     }
 
     /// Write a deterministic v1 dictionary and flush the writer.
+    ///
+    /// ```
+    /// use trie::Trie;
+    /// let words: Trie = ["", "line\nbreak", "🦀"].into_iter().collect();
+    /// let mut bytes = Vec::new();
+    /// words.to_writer(&mut bytes)?;
+    /// let restored = Trie::from_reader(bytes.as_slice())?;
+    /// assert_eq!(restored.words(), words.words());
+    /// # Ok::<(), std::io::Error>(())
+    /// ```
     pub fn to_writer<W: Write>(&self, mut writer: W) -> io::Result<()> {
         writeln!(
             writer,

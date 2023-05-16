@@ -188,6 +188,13 @@ impl Trie {
     }
 
     /// Return complete words that start with `prefix`, in lexical order.
+    ///
+    /// ```
+    /// use trie::Trie;
+    /// let words: Trie = ["app", "apple", "pear"].into_iter().collect();
+    /// assert_eq!(words.autocomplete("app"), ["app", "apple"]);
+    /// assert!(words.autocomplete("missing").is_empty());
+    /// ```
     pub fn autocomplete(&self, prefix: impl AsRef<str>) -> Vec<String> {
         self.autocomplete_with_limit(prefix, usize::MAX)
     }
@@ -290,6 +297,13 @@ impl Trie {
 
     /// Match whole words with `?`, `*`, and backslash escapes.
     /// A final backslash is a literal backslash.
+    ///
+    /// ```
+    /// use trie::Trie;
+    /// let words: Trie = ["cat", "cart", "a*b"].into_iter().collect();
+    /// assert_eq!(words.wildcard("c*t"), ["cart", "cat"]);
+    /// assert_eq!(words.wildcard(r"a\*b"), ["a*b"]);
+    /// ```
     pub fn wildcard(&self, pattern: impl AsRef<str>) -> Vec<String> {
         self.wildcard_with_limit(pattern, usize::MAX)
     }
