@@ -15,6 +15,17 @@ pub struct TrieNode {
     is_word: bool,
 }
 
+impl Drop for TrieNode {
+    fn drop(&mut self) {
+        // Detach descendants before dropping a node so Rust's recursive field
+        // destruction cannot overflow on a long, otherwise valid key.
+        let mut pending: Vec<_> = std::mem::take(&mut self.children).into_values().collect();
+        while let Some(mut node) = pending.pop() {
+            pending.extend(std::mem::take(&mut node.children).into_values());
+        }
+    }
+}
+
 impl TrieNode {
     pub fn new() -> Self {
         Self {
