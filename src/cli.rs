@@ -187,6 +187,18 @@ fn execute(
                 None => Ok(1),
             }
         }
+        "len" => {
+            arity(args, 0, command)?;
+            writeln!(output, "{}", trie.len())?;
+            Ok(0)
+        }
+        "clear" => {
+            arity(args, 0, command)?;
+            let removed = trie.len();
+            trie.clear();
+            writeln!(output, "{removed}")?;
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }

@@ -184,3 +184,26 @@ fn longest_prints_the_longest_stored_prefix_or_exits_one() {
     assert_eq!(absent.status.code(), Some(1));
     assert!(absent.stdout.is_empty());
 }
+
+#[test]
+fn len_and_clear_commands_report_distinct_and_removed_word_counts() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    let saved = temp.path().join("empty.trie");
+    std::fs::write(&path, "a\na\nb\n").unwrap();
+    let path = path.to_str().unwrap();
+    assert_eq!(stdout(&cli(&["--words", path, "len"])), "2\n");
+    let output = cli(&[
+        "-i",
+        "--words",
+        path,
+        "--save",
+        saved.to_str().unwrap(),
+        "clear",
+    ]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "2\n");
+    let restored = trie::Trie::load(&saved).unwrap();
+    assert!(restored.is_empty());
+    assert!(restored.is_case_insensitive());
+}
