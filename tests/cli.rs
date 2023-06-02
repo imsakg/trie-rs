@@ -339,3 +339,29 @@ fn empty_result_lists_are_successful_but_failed_boolean_queries_exit_one() {
         assert!(output.stdout.is_empty());
     }
 }
+
+#[test]
+fn repeated_word_sources_merge_and_unsaved_mutations_leave_the_snapshot_untouched() {
+    let temp = common::temp_dir();
+    let a = temp.path().join("a");
+    let b = temp.path().join("b");
+    let snapshot = temp.path().join("snapshot");
+    std::fs::write(&a, "a\nb\n").unwrap();
+    std::fs::write(&b, "b\nc\n").unwrap();
+    let output = cli(&[
+        "--words",
+        a.to_str().unwrap(),
+        "--words",
+        b.to_str().unwrap(),
+        "--save",
+        snapshot.to_str().unwrap(),
+        "len",
+    ]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "3\n");
+    let original = std::fs::read(&snapshot).unwrap();
+    let output = cli(&["--load", snapshot.to_str().unwrap(), "delete", "a", "b"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "2\n");
+    assert_eq!(std::fs::read(&snapshot).unwrap(), original);
+}
