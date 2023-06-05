@@ -233,3 +233,14 @@ fn import_and_export_commands_interchange_plain_word_lists() {
     assert!(output.status.success());
     assert_eq!(std::fs::read(destination).unwrap(), b"apple\npear\n");
 }
+
+#[test]
+fn tree_command_prints_stable_plain_text() {
+    let temp = common::temp_dir();
+    let path = temp.path().join("words");
+    std::fs::write(&path, "b\nab\na\n").unwrap();
+    let output = cli(&["--words", path.to_str().unwrap(), "tree"]);
+    assert!(output.status.success());
+    assert_eq!(stdout(&output), "a (*)\n b (*)\nb (*)\n");
+    assert!(!output.stdout.contains(&27));
+}

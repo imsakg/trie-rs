@@ -212,6 +212,11 @@ fn execute(
             std::fs::write(&args[0], bytes)?;
             Ok(0)
         }
+        "tree" => {
+            arity(args, 0, command)?;
+            write!(output, "{}", trie.tree())?;
+            Ok(0)
+        }
         _ => Err(invalid(format!("unknown command: {command}"))),
     }
 }
