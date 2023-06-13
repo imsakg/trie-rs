@@ -137,3 +137,15 @@ fn writer_and_flush_failures_are_returned_to_the_caller() {
         );
     }
 }
+
+#[test]
+fn import_words_counts_new_entries_and_accepts_crlf_word_lists() {
+    let mut trie = Trie::case_insensitive();
+    trie.insert("pear");
+    let added = trie
+        .import_words(&b"APPLE\r\npear\n\nwith space\n"[..])
+        .unwrap();
+    assert_eq!(added, 3);
+    assert_eq!(trie.words(), ["", "apple", "pear", "with space"]);
+    assert_eq!(trie.import_words(&b"APPLE\n"[..]).unwrap(), 0);
+}

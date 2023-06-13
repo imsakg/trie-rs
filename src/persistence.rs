@@ -7,6 +7,16 @@ use std::{
 };
 
 impl Trie {
+    /// Import one UTF-8 word per line, preserving spaces and counting new keys.
+    /// LF/CRLF are accepted. On an I/O error, previously read words remain inserted.
+    pub fn import_words<R: BufRead>(&mut self, reader: R) -> io::Result<usize> {
+        let mut added = 0;
+        for line in reader.lines() {
+            added += usize::from(self.insert(line?));
+        }
+        Ok(added)
+    }
+
     /// Save via a synced sibling temporary file and rename it over the destination.
     /// Failure before rename leaves an existing destination untouched.
     pub fn save(&self, path: impl AsRef<Path>) -> io::Result<()> {
