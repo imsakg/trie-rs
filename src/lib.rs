@@ -42,6 +42,14 @@ impl<S: AsRef<str>> Extend<S> for Trie {
     }
 }
 
+impl<S: AsRef<str>> FromIterator<S> for Trie {
+    fn from_iter<I: IntoIterator<Item = S>>(iter: I) -> Self {
+        let mut trie = Self::new();
+        trie.extend(iter);
+        trie
+    }
+}
+
 impl Trie {
     pub fn new() -> Self {
         Self {

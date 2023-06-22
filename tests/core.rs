@@ -116,3 +116,12 @@ fn extend_accepts_borrowed_batches_with_set_semantics() {
     trie.extend(vec![String::from("c")]);
     assert!(trie.contains("c"));
 }
+
+#[test]
+fn collect_builds_a_trie_from_any_string_iterator() {
+    let trie: Trie = ["rain", "rainbow", "rain"].into_iter().collect();
+    assert_eq!(trie.len(), 2);
+    assert!(trie.has_prefix("rainb"));
+    let empty: Trie = std::iter::empty::<String>().collect();
+    assert!(empty.is_empty());
+}
