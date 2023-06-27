@@ -79,6 +79,31 @@ impl Trie {
         self.node(prefix.as_ref()).is_some()
     }
 
+    /// Remove a complete word and prune edges no longer used by another word.
+    pub fn remove(&mut self, word: impl AsRef<str>) -> bool {
+        fn remove_at(node: &mut TrieNode, chars: &mut std::str::Chars<'_>) -> bool {
+            match chars.next() {
+                None => std::mem::replace(&mut node.is_word, false),
+                Some(ch) => {
+                    let (removed, prune) = match node.children.get_mut(&ch) {
+                        Some(child) => {
+                            let removed = remove_at(child, chars);
+                            (removed, !child.is_word && child.children.is_empty())
+                        }
+                        None => return false,
+                    };
+                    if prune {
+                        node.children.remove(&ch);
+                    }
+                    removed
+                }
+            }
+        }
+        let removed = remove_at(&mut self.root, &mut word.as_ref().chars());
+        self.len -= usize::from(removed);
+        removed
+    }
+
     pub fn print(self) {
         pub fn print_single_node(word: &str, depth: usize, is_word: bool) {
             if depth > 0 {

@@ -60,3 +60,22 @@ fn prefix_search_distinguishes_paths_from_words() {
     assert!(trie.has_prefix("cat"));
     assert!(!trie.has_prefix("cats"));
 }
+
+#[test]
+fn remove_reports_membership_and_keeps_other_words() {
+    let mut trie = Trie::new();
+    for word in ["car", "cart", "cat", ""] {
+        trie.insert(word);
+    }
+    assert!(!trie.remove("ca"));
+    assert!(trie.remove("car"));
+    assert!(!trie.contains("car"));
+    assert!(trie.contains("cart"));
+    assert_eq!(trie.len(), 3);
+    assert!(trie.remove("cart"));
+    assert!(!trie.has_prefix("car"));
+    assert!(trie.contains("cat"));
+    assert!(trie.remove(""));
+    assert!(!trie.remove(""));
+    assert_eq!(trie.len(), 1);
+}
