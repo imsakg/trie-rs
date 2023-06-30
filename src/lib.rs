@@ -2,21 +2,21 @@ extern crate termion;
 
 use termion::color;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 pub struct Trie {
     root: TrieNode,
     len: usize,
 }
 
 pub struct TrieNode {
-    children: HashMap<char, TrieNode>,
+    children: BTreeMap<char, TrieNode>,
     is_word: bool,
 }
 
 impl TrieNode {
     pub fn new() -> Self {
         Self {
-            children: HashMap::new(),
+            children: BTreeMap::new(),
             is_word: false,
         }
     }
@@ -60,7 +60,7 @@ impl Trie {
     pub fn insert(&mut self, word: impl AsRef<str>) -> bool {
         let mut current_node = &mut self.root;
         for c in word.as_ref().chars() {
-            current_node = current_node.children.entry(c).or_insert(TrieNode::new());
+            current_node = current_node.children.entry(c).or_default();
         }
         let added = !current_node.is_word;
         current_node.is_word = true;
@@ -134,13 +134,12 @@ impl Trie {
             if node.is_word {
                 words.push(word.clone());
             }
-            for (ch, child) in &node.children {
+            for (ch, child) in node.children.iter().rev() {
                 let mut next = word.clone();
                 next.push(*ch);
                 stack.push((child, next));
             }
         }
-        words.sort();
         words
     }
 
